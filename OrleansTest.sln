@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2002
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrleansTest", "OrleansTest\OrleansTest.csproj", "{BE77503C-B9E5-40A5-B661-AC489C93707E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrainInterfaces", "GrainInterfaces\GrainInterfaces.csproj", "{8BCE6E9A-E707-44EF-86F7-38893A96A56F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Grains", "Grains\Grains.csproj", "{936A3804-E818-4C43-98FA-BCB71645FAA5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BE77503C-B9E5-40A5-B661-AC489C93707E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE77503C-B9E5-40A5-B661-AC489C93707E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE77503C-B9E5-40A5-B661-AC489C93707E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE77503C-B9E5-40A5-B661-AC489C93707E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8BCE6E9A-E707-44EF-86F7-38893A96A56F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BCE6E9A-E707-44EF-86F7-38893A96A56F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BCE6E9A-E707-44EF-86F7-38893A96A56F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BCE6E9A-E707-44EF-86F7-38893A96A56F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{936A3804-E818-4C43-98FA-BCB71645FAA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{936A3804-E818-4C43-98FA-BCB71645FAA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{936A3804-E818-4C43-98FA-BCB71645FAA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{936A3804-E818-4C43-98FA-BCB71645FAA5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {59031A3A-940E-453F-ABD5-354615483630}
+	EndGlobalSection
+EndGlobal
