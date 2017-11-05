@@ -18,7 +18,9 @@ namespace OrleansTest
     /// </summary>
     public class Program
     {
-        static void Main(string[] args)
+        static void Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
+
+        static async Task MainAsync(string[] args)
         {
             // First, configure and start a local silo
             var siloConfig = ClusterConfiguration.LocalhostPrimarySilo(siloPort:8080);
@@ -38,7 +40,7 @@ namespace OrleansTest
                 .UseConfiguration(clientConfig)
                 .Build();
 
-            client.Connect().Wait();
+            await client.Connect();
 
             Console.WriteLine("Client connected.");
 
@@ -46,13 +48,16 @@ namespace OrleansTest
             // This is the place for your test code.
             //
 
-            var friend = client.GetGrain<IGreeterGrain>(Guid.NewGuid());
+            var id = Guid.NewGuid();
+            var friend = client.GetGrain<IGreeterGrain>(id);
             var streamProvider = client.GetStreamProvider("SimpleStreamProvider");
-            var stream = streamProvider.GetStream<Request>(Guid.NewGuid(), "MyStreamNamespace");
+            var stream = streamProvider.GetStream<Request>(id, "MyStreamNamespace");
+            var request = new Request() { Msg = "Hello" };
+            var requests = Enumerable.Range(0, 1000).Select(i => new Request() { Msg = "Hello" }).ToList();
             
             var send = 0;
 
-            Task.Run(async () =>
+            var t1 = Task.Run(async () =>
             {
                 while (true)
                 {
@@ -63,25 +68,41 @@ namespace OrleansTest
                 }
             });
             
-            Task.Run(async () =>
+            var t2 = Task.Run(async () =>
             {
+                //while (true)
+                //{
+                //    for (int i = 0; i < 10000; i++)
+                //    {
+                //        friend.SayHello("peter");
+                //        send++;
+                //    }
+                //    await Task.Delay(TimeSpan.FromMilliseconds(1));
+                //}
+
+                //while (true)
+                //{
+                //    await stream.OnNextBatchAsync(requests);
+                //    send += requests.Count;
+                //}
+
                 while (true)
                 {
-                    for (int i = 0; i < 10000; i++)
-                    {
-                        friend.SayHello("peter");
-                        //await stream.OnNextAsync(request);
-                        send++;
-                    }
-                    await Task.Delay(TimeSpan.FromMilliseconds(1));
+                    await stream.OnNextAsync(request);
+                    send ++;
                 }
             });
 
-            Console.WriteLine("\nPress Enter to terminate...");
-            Console.ReadLine();
+            var t3 = Task.Run(() =>
+            {
+                Console.WriteLine("\nPress Enter to terminate...");
+                Console.ReadLine();
+            });
+
+            await await Task.WhenAny(t1, t2, t3);
 
             // Shut down
-            client.Close();
+            await client.Close();
             silo.ShutdownOrleansSilo();
         }
     }
