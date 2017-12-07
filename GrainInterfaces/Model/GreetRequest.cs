@@ -3,8 +3,8 @@
 namespace GrainInterfaces.Model
 {
     [Immutable]
-    public class Request
+    public class GreetRequest
     {
-        public string Msg { get; set; }
+        public string Name { get; set; }
     }
 }
