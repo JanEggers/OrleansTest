@@ -41,5 +41,21 @@ namespace Grains
             count = 0;
             return Task.FromResult(temp);
         }
+
+        public Task OnNextAsync(Request item, StreamSequenceToken token = null)
+        {
+            count++;
+            return Task.CompletedTask;
+        }
+
+        public Task OnCompletedAsync()
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task OnErrorAsync(Exception ex)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

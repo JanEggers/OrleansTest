@@ -18,7 +18,9 @@ namespace OrleansTest
     /// </summary>
     public class Program
     {
-        static void Main(string[] args)
+        static void Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
+
+        static async Task MainAsync(string[] args)
         {
             // First, configure and start a local silo
             var siloConfig = ClusterConfiguration.LocalhostPrimarySilo(siloPort:8080);
@@ -41,7 +43,7 @@ namespace OrleansTest
                 .AddApplicationPart(typeof(IGreeterGrain).Assembly)
                 .Build();
 
-            client.Connect().Wait();
+            await client.Connect();
 
             Console.WriteLine("Client connected.");
 
@@ -81,11 +83,16 @@ namespace OrleansTest
                 }
             });
 
-            Console.WriteLine("\nPress Enter to terminate...");
-            Console.ReadLine();
+            var t3 = Task.Run(() =>
+            {
+                Console.WriteLine("\nPress Enter to terminate...");
+                Console.ReadLine();
+            });
+
+            await await Task.WhenAny(t1, t2, t3);
 
             // Shut down
-            client.Close();
+            await client.Close();
             silo.ShutdownOrleansSilo();
         }
     }
