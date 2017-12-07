@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using GrainInterfaces;
 using GrainInterfaces.Model;
@@ -40,22 +39,6 @@ namespace Grains
             var temp = count;
             count = 0;
             return Task.FromResult(temp);
-        }
-
-        public Task OnNextAsync(Request item, StreamSequenceToken token = null)
-        {
-            count++;
-            return Task.CompletedTask;
-        }
-
-        public Task OnCompletedAsync()
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task OnErrorAsync(Exception ex)
-        {
-            return Task.CompletedTask;
         }
     }
 }

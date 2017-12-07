@@ -59,7 +59,7 @@ namespace OrleansTest
             var send = 0;
             var stopwatch = new Stopwatch();
             
-            Task.Run(async () =>
+            await Task.Run(async () =>
             {
                 var name = "peter";
                 var request = new GreetRequest()
@@ -82,15 +82,7 @@ namespace OrleansTest
                     stopwatch.Restart();
                 }
             });
-
-            var t3 = Task.Run(() =>
-            {
-                Console.WriteLine("\nPress Enter to terminate...");
-                Console.ReadLine();
-            });
-
-            await await Task.WhenAny(t1, t2, t3);
-
+            
             // Shut down
             await client.Close();
             silo.ShutdownOrleansSilo();
