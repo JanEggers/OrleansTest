@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using GrainInterfaces;
@@ -40,7 +41,9 @@ namespace OrleansTest
             clientConfig.RegisterStreamProvider<SimpleMessageStreamProvider>("SimpleStreamProvider");
             var client = new ClientBuilder()
                 .UseConfiguration(clientConfig)
-                .AddApplicationPart(typeof(IGreeterGrain).Assembly)
+                .ConfigureApplicationParts(parts => {
+                    parts.AddApplicationPart(typeof(IGreeterGrain).Assembly);
+                })
                 .Build();
 
             await client.Connect();
@@ -56,7 +59,6 @@ namespace OrleansTest
             var streamProvider = client.GetStreamProvider("SimpleStreamProvider");
             var stream = streamProvider.GetStream<GreetRequest>(id, "MyStreamNamespace");
             
-            var send = 0;
             var stopwatch = new Stopwatch();
             
             await Task.Run(async () =>
@@ -70,15 +72,14 @@ namespace OrleansTest
 
                 while (true)
                 {
-                    for (int i = 0; i < 10000; i++)
-                    {
-                        //await friend.SayHello(name);
-                        await stream.OnNextAsync(request);
-                        send++;
-                    }
+                    var work = Enumerable.Range(0, 10000)
+                        .Select(p => friend.SayHello(name));
+                    //.Select(stream.OnNextAsync(request));
+                    
+                    await Task.WhenAll(work);
+                    
                     var recv = await friend.GetStatistics();
-                    Console.WriteLine($"{send}/{recv} {send/stopwatch.Elapsed.TotalSeconds} msg/sec");
-                    send = 0;
+                    Console.WriteLine($"{recv / stopwatch.Elapsed.TotalSeconds} msg/sec");
                     stopwatch.Restart();
                 }
             });
