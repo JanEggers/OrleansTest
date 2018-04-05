@@ -17,7 +17,7 @@ namespace Grains
         public override async Task OnActivateAsync()
         {
             await base.OnActivateAsync();
-
+            
             //Create a GUID based on our GUID as a grain
             var guid = this.GetPrimaryKey();
             //Get one of the providers which we defined in config

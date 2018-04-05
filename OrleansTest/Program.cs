@@ -63,14 +63,43 @@ namespace OrleansTest
             await client.Connect();
 
             Console.WriteLine("Client connected.");
-            
-            var id = Guid.NewGuid();
-            var friend = client.GetGrain<IGreeterGrain>(id);
+            //await SpeedTest(client);
+
+            var repository = client.GetDeviceRepository();
+
+            var deviceId1 = "device1";
+            var device1 = await repository.CreateDevice(deviceId1);
+            var statusStreamId = await device1.GetStatusStreamId();
+
             var streamProvider = client.GetStreamProvider("SimpleStreamProvider");
-            var stream = streamProvider.GetStream<GreetRequest>(id, "MyStreamNamespace");
-            
+            var stream = streamProvider.GetStream<DeviceStatus>(statusStreamId, nameof(DeviceStatus));
+
+            var handle = await stream.SubscribeAsync(async (s, token) => Console.WriteLine(s.OperationStatus.ToString()));
+
+            while (true)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1));
+            }
+            await handle.UnsubscribeAsync();
+
+            // Shut down
+            await client.Close();
+            silo.ShutdownOrleansSilo();
+        }
+
+        private static async Task SpeedTest(IClusterClient client)
+        {
+            //
+            // This is the place for your test code.
+            //
+
+            //var id = Guid.NewGuid();
+            //var friend = client.GetGrain<IGreeterGrain>(id);
+            var streamProvider = client.GetStreamProvider("SimpleStreamProvider");
+            //var stream = streamProvider.GetStream<GreetRequest>(id, "MyStreamNamespace");
+
             var stopwatch = new Stopwatch();
-            
+
             await Task.Run(async () =>
             {
                 var name = "peter";
@@ -80,23 +109,27 @@ namespace OrleansTest
                 };
                 stopwatch.Start();
 
+                var ids = Enumerable.Range(0, 100000)
+                    .Select(p => new Guid())
+                    .ToList();
+
                 while (true)
                 {
-                    var work = Enumerable.Range(0, 15_000)
-                        .Select(p => friend.SayHello(name));
-                      //  .Select(p => stream.OnNextAsync(request));
-                    
+                    var work = ids
+                        .Select(id =>
+                        {
+                            var friend = client.GetGrain<IGreeterGrain>(id);
+                            return friend.SayHello(name);
+                        });
+                    //.Select(stream.OnNextAsync(request));
+
                     await Task.WhenAll(work);
-                    
-                    var recv = await friend.GetStatistics();
-                    Console.WriteLine($"{recv / stopwatch.Elapsed.TotalSeconds} msg/sec");
+
+                    //var recv = await friend.GetStatistics();
+                    Console.WriteLine($"{ids.Count / stopwatch.Elapsed.TotalSeconds} msg/sec");
                     stopwatch.Restart();
                 }
             });
-            
-            // Shut down
-            await client.Close();
-            await silo.StopAsync();
         }
     }
 }
