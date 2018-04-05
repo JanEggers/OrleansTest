@@ -8,9 +8,9 @@ using GrainInterfaces.Model;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
+using Orleans.Streams;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Orleans.Serialization;
 
 namespace OrleansTest
 {
@@ -24,10 +24,12 @@ namespace OrleansTest
         static async Task MainAsync(string[] args)
         {
             var silo = new SiloHostBuilder()
-                .ConfigureAppConfiguration(builder => {
+                .ConfigureAppConfiguration(builder =>
+                {
                     builder.AddJsonFile("appsettings.json");
                 })
-                .ConfigureLogging((context, builder) => {
+                .ConfigureLogging((context, builder) =>
+                {
                     builder.AddConsole();
                     builder.AddConfiguration(context.Configuration.GetSection("Logging"));
                 })
@@ -44,7 +46,7 @@ namespace OrleansTest
                 .Build();
 
             await silo.StartAsync();
-            
+
             Console.WriteLine("Silo started.");
 
             var client = new ClientBuilder()
@@ -53,7 +55,8 @@ namespace OrleansTest
                     options.ClusterId = "TestSilo";
                     options.ServiceId = "TestSilo";
                 })
-                .ConfigureApplicationParts(parts => {
+                .ConfigureApplicationParts(parts =>
+                {
                     parts.AddApplicationPart(typeof(IGreeterGrain).Assembly);
                 })
                 .UseLocalhostClustering()
@@ -63,8 +66,17 @@ namespace OrleansTest
             await client.Connect();
 
             Console.WriteLine("Client connected.");
-            //await SpeedTest(client);
+            await SpeedTest(client);
 
+            //await DeviceStateTest(client);
+
+            // Shut down
+            await client.Close();
+            await silo.StopAsync();
+        }
+
+        private static async Task DeviceStateTest(IClusterClient client)
+        {
             var repository = client.GetDeviceRepository();
 
             var deviceId1 = "device1";
@@ -81,22 +93,11 @@ namespace OrleansTest
                 await Task.Delay(TimeSpan.FromSeconds(1));
             }
             await handle.UnsubscribeAsync();
-
-            // Shut down
-            await client.Close();
-            silo.ShutdownOrleansSilo();
         }
 
         private static async Task SpeedTest(IClusterClient client)
         {
-            //
-            // This is the place for your test code.
-            //
-
-            //var id = Guid.NewGuid();
-            //var friend = client.GetGrain<IGreeterGrain>(id);
             var streamProvider = client.GetStreamProvider("SimpleStreamProvider");
-            //var stream = streamProvider.GetStream<GreetRequest>(id, "MyStreamNamespace");
 
             var stopwatch = new Stopwatch();
 
@@ -109,7 +110,7 @@ namespace OrleansTest
                 };
                 stopwatch.Start();
 
-                var ids = Enumerable.Range(0, 100000)
+                var ids = Enumerable.Range(0, 30000)
                     .Select(p => new Guid())
                     .ToList();
 
@@ -121,7 +122,11 @@ namespace OrleansTest
                             var friend = client.GetGrain<IGreeterGrain>(id);
                             return friend.SayHello(name);
                         });
-                    //.Select(stream.OnNextAsync(request));
+                    //.Select(id => 
+                    //{
+                    //    var stream = streamProvider.GetStream<GreetRequest>(id, "MyStreamNamespace");
+                    //    return stream.OnNextAsync(request);
+                    //});
 
                     await Task.WhenAll(work);
 
