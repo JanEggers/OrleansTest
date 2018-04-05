@@ -1,16 +1,16 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
+using System.Net;
 using System.Threading.Tasks;
 using GrainInterfaces;
 using GrainInterfaces.Model;
 using Orleans;
-using Orleans.Providers.Streams.SimpleMessageStream;
-using Orleans.Runtime.Configuration;
-using Orleans.Runtime.Host;
+using Orleans.Configuration;
+using Orleans.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Orleans.Serialization;
-using Orleans.Storage;
 
 namespace OrleansTest
 {
@@ -23,37 +23,47 @@ namespace OrleansTest
 
         static async Task MainAsync(string[] args)
         {
-            // First, configure and start a local silo
-            var siloConfig = ClusterConfiguration.LocalhostPrimarySilo(siloPort:8080);
-            siloConfig.Globals.RegisterStreamProvider<SimpleMessageStreamProvider>("SimpleStreamProvider");
-            siloConfig.Globals.RegisterStorageProvider<MemoryStorage>("Default");
-            siloConfig.Globals.RegisterStorageProvider<MemoryStorage>("PubSubStore");
-            siloConfig.Globals.FallbackSerializationProvider = typeof(ILBasedSerializer).GetTypeInfo();
-            var silo = new SiloHost("TestSilo", siloConfig);
-            silo.InitializeOrleansSilo();
-            silo.StartOrleansSilo();
+            var silo = new SiloHostBuilder()
+                .ConfigureAppConfiguration(builder => {
+                    builder.AddJsonFile("appsettings.json");
+                })
+                .ConfigureLogging((context, builder) => {
+                    builder.AddConsole();
+                    builder.AddConfiguration(context.Configuration.GetSection("Logging"));
+                })
+                .Configure<ClusterOptions>(options =>
+                {
+                    options.ClusterId = "TestSilo";
+                    options.ServiceId = "TestSilo";
+                })
+                .Configure<EndpointOptions>(options => options.AdvertisedIPAddress = IPAddress.Loopback)
+                .UseLocalhostClustering()
+                .AddSimpleMessageStreamProvider("SimpleStreamProvider")
+                .AddMemoryGrainStorageAsDefault()
+                .AddMemoryGrainStorage("PubSubStore")
+                .Build();
 
+            await silo.StartAsync();
+            
             Console.WriteLine("Silo started.");
 
-            // Then configure and connect a client.
-            var clientConfig = ClientConfiguration.LocalhostSilo();
-            clientConfig.FallbackSerializationProvider = typeof(ILBasedSerializer).GetTypeInfo();
-            clientConfig.RegisterStreamProvider<SimpleMessageStreamProvider>("SimpleStreamProvider");
             var client = new ClientBuilder()
-                .UseConfiguration(clientConfig)
+                .Configure<ClusterOptions>(options =>
+                {
+                    options.ClusterId = "TestSilo";
+                    options.ServiceId = "TestSilo";
+                })
                 .ConfigureApplicationParts(parts => {
                     parts.AddApplicationPart(typeof(IGreeterGrain).Assembly);
                 })
+                .UseLocalhostClustering()
+                .AddSimpleMessageStreamProvider("SimpleStreamProvider")
                 .Build();
 
             await client.Connect();
 
             Console.WriteLine("Client connected.");
-
-            //
-            // This is the place for your test code.
-            //
-
+            
             var id = Guid.NewGuid();
             var friend = client.GetGrain<IGreeterGrain>(id);
             var streamProvider = client.GetStreamProvider("SimpleStreamProvider");
@@ -72,9 +82,9 @@ namespace OrleansTest
 
                 while (true)
                 {
-                    var work = Enumerable.Range(0, 10000)
+                    var work = Enumerable.Range(0, 15_000)
                         .Select(p => friend.SayHello(name));
-                    //.Select(stream.OnNextAsync(request));
+                      //  .Select(p => stream.OnNextAsync(request));
                     
                     await Task.WhenAll(work);
                     
@@ -86,7 +96,7 @@ namespace OrleansTest
             
             // Shut down
             await client.Close();
-            silo.ShutdownOrleansSilo();
+            await silo.StopAsync();
         }
     }
 }
