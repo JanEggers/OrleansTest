@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Grains.Placement;
 using Orleans;
 
 namespace GrainInterfaces

@@ -11,6 +11,7 @@ using Orleans.Hosting;
 using Orleans.Streams;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Grains.Placement;
 
 namespace OrleansTest
 {
@@ -40,6 +41,7 @@ namespace OrleansTest
                 })
                 .Configure<EndpointOptions>(options => options.AdvertisedIPAddress = IPAddress.Loopback)
                 .UseLocalhostClustering()
+                .AddPlacementDirector<RolePlacementStrategy, RolePlacementDirector>()
                 .AddSimpleMessageStreamProvider("SimpleStreamProvider")
                 .AddMemoryGrainStorageAsDefault()
                 .AddMemoryGrainStorage("PubSubStore")

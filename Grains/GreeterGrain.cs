@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using GrainInterfaces;
 using GrainInterfaces.Model;
+using Grains.Placement;
 using Orleans;
 using Orleans.Streams;
 
@@ -9,6 +10,7 @@ namespace Grains
     /// <summary>
     /// Grain implementation class Grain1.
     /// </summary>
+    [RolePlacement("Device")]
     [ImplicitStreamSubscription("MyStreamNamespace")]
     public class GreeterGrain : Grain, IGreeterGrain
     {
