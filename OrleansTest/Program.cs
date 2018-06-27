@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading.Tasks;
 using GrainInterfaces;
 using GrainInterfaces.Model;
+using Grains;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
@@ -39,8 +40,21 @@ namespace OrleansTest
                     options.ClusterId = "TestSilo";
                     options.ServiceId = "TestSilo";
                 })
-                .Configure<EndpointOptions>(options => options.AdvertisedIPAddress = IPAddress.Loopback)
-                .UseLocalhostClustering()
+                .ConfigureApplicationParts(parts =>
+                {
+                    parts.AddApplicationPart(typeof(DeviceGrain).Assembly)
+                        .WithReferences();
+                })
+                .Configure<TypeManagementOptions>(options =>
+                {
+                    options.TypeMapRefreshInterval = TimeSpan.FromSeconds(1);
+                })
+                .ConfigureEndpoints(siloPort: 11111, gatewayPort: 30000, advertisedIP: IPAddress.Loopback)
+                .UseAdoNetClustering(options =>
+                {
+                    options.ConnectionString = @"Server=localhost\SQLEXPRESS;Initial Catalog=OrleansTest;Trusted_Connection=True;";
+                    options.Invariant = "System.Data.SqlClient";
+                })
                 .AddPlacementDirector<RolePlacementStrategy, RolePlacementDirector>()
                 .AddSimpleMessageStreamProvider("SimpleStreamProvider")
                 .AddMemoryGrainStorageAsDefault()
@@ -59,15 +73,23 @@ namespace OrleansTest
                 })
                 .ConfigureApplicationParts(parts =>
                 {
-                    parts.AddApplicationPart(typeof(IGreeterGrain).Assembly);
+                    parts.AddApplicationPart(typeof(IDevice).Assembly);
                 })
-                .UseLocalhostClustering()
+                .UseAdoNetClustering(options =>
+                {
+                    options.ConnectionString = @"Server=localhost\SQLEXPRESS;Initial Catalog=OrleansTest;Trusted_Connection=True;";
+                    options.Invariant = "System.Data.SqlClient";
+                })
                 .AddSimpleMessageStreamProvider("SimpleStreamProvider")
                 .Build();
 
-            await client.Connect();
+            await Task.Delay(5000);
+            Console.WriteLine("idle");
 
+            await client.Connect();
             Console.WriteLine("Client connected.");
+            
+            Console.WriteLine("idle");
             await SpeedTest(client);
 
             //await DeviceStateTest(client);
@@ -112,8 +134,9 @@ namespace OrleansTest
                 };
                 stopwatch.Start();
 
-                var ids = Enumerable.Range(0, 30000)
-                    .Select(p => new Guid())
+                var ids = Enumerable.Range(0, 5000)
+                    .Select(p => Guid.NewGuid())
+                    //.Select(p => new Guid())
                     .ToList();
 
                 while (true)
