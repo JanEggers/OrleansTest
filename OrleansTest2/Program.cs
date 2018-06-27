@@ -56,7 +56,12 @@ namespace OrleansTest2
 
             await silo.StartAsync();
 
-            await Task.Delay(TimeSpan.FromDays(1));
+            Console.WriteLine("Silo started.");
+
+            while (true)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1));
+            }
         }
     }
 }
