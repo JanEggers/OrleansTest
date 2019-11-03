@@ -21,10 +21,10 @@ namespace OrleansTest
     /// </summary>
     public class Program
     {
-        static void Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
-
-        static async Task MainAsync(string[] args)
+        static async Task Main(string[] args)
         {
+            Console.Title = "OrleansTest";
+
             var silo = new SiloHostBuilder()
                 .ConfigureAppConfiguration(builder =>
                 {

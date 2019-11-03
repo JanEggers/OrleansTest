@@ -13,10 +13,10 @@ namespace OrleansClient
 {
     class Program
     {
-        static void Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
-
-        static async Task MainAsync(string[] args)
+        static async Task Main(string[] args)
         {
+            Console.Title = "OrleansClient";
+
             {
                 var client = new ClientBuilder()
                     .Configure<ClusterOptions>(options =>
@@ -63,7 +63,10 @@ namespace OrleansClient
             var streamProvider = client.GetStreamProvider("SimpleStreamProvider");
             var stream = streamProvider.GetStream<DeviceStatus>(statusStreamId, nameof(DeviceStatus));
 
-            var handle = await stream.SubscribeAsync(async (s, token) => Console.WriteLine(s.OperationStatus.ToString()));
+            var handle = await stream.SubscribeAsync((s, token) => {
+                Console.WriteLine(s.OperationStatus.ToString());
+                return Task.CompletedTask;
+            });
 
             while (true)
             {

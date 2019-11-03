@@ -12,12 +12,12 @@ namespace OrleansTest2.Placement
         {
         }
 
-        public virtual async Task<SiloAddress> OnAddActivation(PlacementStrategy strategy, PlacementTarget target, IPlacementContext context)
+        public virtual Task<SiloAddress> OnAddActivation(PlacementStrategy strategy, PlacementTarget target, IPlacementContext context)
         {
             var allSilos = context.GetCompatibleSilos(target);
             var rolePlacementStrategy = (RolePlacementStrategy)strategy;
 
-            return allSilos[0];
+            return Task.FromResult(allSilos[0]);
         }
     }
 }
